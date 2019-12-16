@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>绘制点</title>
+</head>
+<body>
+
+    <canvas width="500" height="500" id="canvas"></canvas>    
+    <script type="notjs" id="vertex">
+        void main() {
+            gl_Position = vec4(0, 0, 0, 1); 
+            gl_PointSize = 10.0; 
+        }
+    </script> 
+    <script type="notjs" id="fragment">
+        void main() {
+            gl_FragColor = vec4(0, 0, 0, 1);
+        }
+    </script>
+
+
+
+
+    <script>
+        
+        // webgl绘制的三种图元有三种：点 线段 三角形
+
+
+        // 绘制webGl的步骤
+        // 1. 获取WebGl绘图上下文
+        // 2. 初始化着色器
+        // 3. 设置点的坐标信息
+        // 4. 设置canvas背景色
+        // 5. 清空canvas
+        // 6. 绘制
+
+
+
+        // 着色器是用GLSL实现的代码 是作用在我们GPU上的 
+
+
+        var oCanvas = document.getElementById('canvas');
+        var gl = oCanvas.getContext('webgl');
+        if(!gl) { // 浏览器兼容问题 IE8以下不兼容
+            alert('浏览器不支持webgl');
+        }
+
+
+        // 着色器怎么声明
+        // 1. 用字符串的形式写在JS代码里        var str = ''
+        // 2. 写在script标签里面 这样写以JavaScript的代码的进行解析和执行  着色器语言和JavaScript语言是由区别的 
+        //                《script type=""》type写一个不是JavaScript就行 这样不以JavaScript的方式执行了
+        // 着色器语言
+        // 着色器分为顶点着色器和片元着色器
+        //      顶点着色器：用来描述顶点特征的程序  绘制一些顶点信息
+        //      片元着色器：进行片元处理工程如光照的程序  进行填充颜色的 填充颜色的
+
+        // 着色器的变量声明方式 --- 存储限度符
+        // 1. attribute变量：传输的是与顶点有关的数据
+        // 2. uniform变量：传输的是对于所有顶点都相关（或与顶点无关）的数据（全局变量）
+        // 3. textures变量：纹理（纹理是一个数据序列 可以在着色器运行中随意读取其中的数据 大多数情况存放的是图像数据 但是纹理仅仅是数据序列
+        //      你也可以随意存放除了颜色数据以外的其它数据）
+        // 4. Varying可变变量：可变变量是一种着色器给片断着色器传值的方式 依照渲染的图元是点丶线段还是三角形 
+        //      顶点着色器中设置的可变量会在片断着色器运行中获取不同的插值
+        // 
+        // 变量声明
+        // 存储限定符 类型 变量名            存储限度符 类型 变量名
+        // atrribute vec4 a_Position        uniform  vec4 u_FragColor
+
+        // GLSL ES数据类型 （变量类型）
+        // 类别     GLSL ES数据类型             描述
+        // 矢量     vec2   vec3   vec4         具有2/3/4个浮点数元素的矢量
+        //          ivec2  ivec3  ivec4        具有2/3/4个整形元素的矢量
+        //          bvec2  bvec3  bvec4        具有2/3/4个布尔值元素的矢量
+        // 矩阵      mat2   mat3  mat4          2*2 3*3 4*4的浮点数元素的矩阵（分别具有4 9 16个元素）    (旋转 平移 改变视角的旋转 图形的旋转 繁琐的计算)
+
+
+
+
+        // 顶点着色器和片元着色器必须分开
+
+        // 除了GLSL这个着色器语言之外 几乎所有的语言里面在写代码的时候都需要一个主函数 最后执行的主函数 几乎所有主函数都要一个返回类型的
+        //    返回类型在前面写的 
+
+
+        // 顶点着色器的内置变量（内置变量不需要声明就可以使用的）
+        // 类型和变量名          描述
+        // vec4 gl_Position     描述顶点位置
+        // float gl_PointSize   表示点的尺寸（像素数）
+        // 注意：gl_Position变量必须被赋值 否则着色器就无法正常工作 
+        //      相反 gl_PointSize并不是必须的 如果你不赋值 着色器就会为其取默认值1.0
+
+
+
+
+        // 片元着色器的内置变量
+        // 类型和变量名           描述
+        // vec4 gl_FragColor     指定片元颜色（RGBA格式）
+
+
+        // 着色器行为
+        // 浏览器不能直接识别着色器语言的
+
+
+
+
+        // 创建着色器函数
+        function createShader(gl, type, source) {
+            var shader = gl.createShader(type);  // 创建着色器  type: gl.VERTEX_SHADER(顶点着色器) gl.FRAGMENT_SHADER(片元着色器)
+            gl.shaderSource(shader, source); // 向着色器添加资源 shader: 着色器   source:添加的程序（字符串类型）
+            gl.compileShader(shader); // 编译着色器
+            var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS)   // 判断编译成功的状态
+            // console.log(success);
+            if(success) {
+                return shader;
+            } 
+            // 打印错误信息
+            console.log(gl.getShaderInfoLog(shader));
+        }
+
+        var vertexStr = document.getElementById('vertex').innerText;
+        var fragmentStr = document.getElementById('fragment').innerText;
+        // console.log(vertexStr, fragmentStr);
+        var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexStr);
+        var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentStr);
+
+
+        // 创建程序  ==》 连接着色器
+        function createProgram(gl, vertexShader, fragmentShader) {
+            var program = gl.createProgram(); // 创建程序
+            gl.attachShader(program, vertexShader); // 绑定着色器 program: 被插入的程序  shader:要绑定的着色器
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program); // 连接着色器程序
+            var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+            if(success) {
+                return program;
+            }
+            
+            return program;
+        }
+        var program = createProgram(gl, vertexShader, fragmentStr);
+        gl.useProgram(program);
+    
+
+        // 清空画布
+        gl.clearColor(0, 0, 1, 1);
+        // 清空颜色缓冲区
+        gl.clearColor(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(hl.PINTS, 0, 1) // 执行顶点着色器
+    
+    
+    </script>
+    
+</body>
+</html>
